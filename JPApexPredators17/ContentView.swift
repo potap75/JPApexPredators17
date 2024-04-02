@@ -6,12 +6,17 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct ContentView: View {
     
     let predators = Predators()
     @State var searchText = ""
+    @State var alphabetical = false
+    @State var currentSelection = PredatorType.all
     var filteredDinos: [ApexPredator] {
+        predators.filter(by: currentSelection)
+        predators.sort(by: alphabetical)
         return predators.search(for: searchText)
     }
     
@@ -19,10 +24,7 @@ struct ContentView: View {
         NavigationStack {
             List(filteredDinos) { predator in
                 NavigationLink {
-                    
-                    Image(predator.image)
-                        .resizable()
-                        .scaledToFit()
+                    PredatorDetail(predator: predator, position: .camera(MapCamera(centerCoordinate: Predators().apexPredators[2].location, distance: 30000)))
                 } label: {
                     
                     
@@ -57,10 +59,38 @@ struct ContentView: View {
             .searchable(text: $searchText)
             .autocorrectionDisabled()
             .animation(.default, value: searchText)
+            .toolbar{
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        withAnimation {
+                            alphabetical.toggle()
+                        }
+                    } label: {
+
+                        Image(systemName: alphabetical ? "film" : "textformat")
+                            .symbolEffect(.bounce, value: alphabetical)
+                   }
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Picker("Filter", selection: $currentSelection.animation()) {
+                            ForEach(PredatorType.allCases) {
+                                type in 
+                                Label (type.rawValue.capitalized, systemImage: type.icon)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "slider.horizontal.3")
+                    }
+                }
+                
+            }
+            
         }
         .preferredColorScheme(/*@START_MENU_TOKEN@*/.dark/*@END_MENU_TOKEN@*/)
     }
-    }
+}
 
 #Preview {
     ContentView()
